@@ -32,7 +32,7 @@ def summarize_openai(api_key, url):
 
 def summarize_hface(hf_token, url):
     website = Website(url)
-    content = f"Title: {website.title}\n\n{website.text}"
+    content = f"Title: {website.title}\n\n{website.text[:4000]}"
     headers = {"Authorization": f"Bearer {hf_token}"}
     payload = {"inputs": content, "parameters": {"min_length": 40, "max_length": 200}}
     response = requests.post(HF_API_URL, headers=headers, json=payload, timeout=60)
@@ -77,3 +77,4 @@ if st.button("Submit"):
                 summary = summarize_hface(hf_key, url)
                 st.markdown("### ✅ Hugging Face Summary")
                 st.markdown(summary)
+
