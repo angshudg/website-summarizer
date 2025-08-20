@@ -3,6 +3,7 @@ python-dotenv
 beautifulsoup4
 openai
 trafilatura
-newspaper
+newspaper3k
 streamlit
 altair==4.2.2
+
