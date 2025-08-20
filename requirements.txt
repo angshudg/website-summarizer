@@ -5,3 +5,4 @@ openai
 trafilatura
 newspaper
 streamlit
+altair==4.2.2
