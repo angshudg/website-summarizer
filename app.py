@@ -10,6 +10,52 @@ HF_API_URL = "https://api-inference.huggingface.co/models/facebook/bart-large-cn
 class Website:
     def __init__(self, url: str):
         self.url = url
+        self.title, self.text = self._extract_content(url)
+
+    def _extract_content(self, url):
+        # --- Try Trafilatura ---
+        try:
+            import trafilatura
+            downloaded = trafilatura.fetch_url(url)
+            if downloaded:
+                extracted = trafilatura.extract(downloaded)
+                if extracted:
+                    return ("Trafilatura Extraction", extracted)
+        except Exception:
+            pass
+
+        # --- Try Newspaper3k ---
+        try:
+            from newspaper import Article
+            article = Article(url)
+            article.download()
+            article.parse()
+            if article.text.strip():
+                return (article.title or "No title", article.text)
+        except Exception:
+            pass
+
+        # --- Fallback: BeautifulSoup ---
+        try:
+            response = requests.get(url, headers={"User-Agent": "Mozilla/5.0"}, timeout=10)
+            soup = BeautifulSoup(response.content, 'html.parser')
+            title = soup.title.string if soup.title else "No title found"
+
+            # Remove irrelevant tags
+            for irrelevant in soup.body(["script", "style", "img", "input", "footer", "nav", "aside"]):
+                irrelevant.decompose()
+
+            # Filter short/noisy paragraphs
+            paras = [p.get_text(strip=True) for p in soup.find_all("p")]
+            cleaned = [p for p in paras if len(p.split()) > 5]  # keep only meaningful sentences
+
+            return (title, "\n".join(cleaned))
+        except Exception:
+            return ("No title found", "No text extracted")
+
+class Website_old:
+    def __init__(self, url: str):
+        self.url = url
         response = requests.get(url, headers={"User-Agent": "Mozilla/5.0"}, timeout=10)
         soup = BeautifulSoup(response.content, 'html.parser')
         self.title = soup.title.string if soup.title else "No title found"
@@ -77,6 +123,7 @@ if st.button("Submit"):
                 summary = summarize_hface(hf_key, url)
                 st.markdown("### ✅ Hugging Face Summary")
                 st.markdown(summary)
+
 
 
 
